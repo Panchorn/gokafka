@@ -4,7 +4,10 @@ go 1.22.6
 
 replace events => ../events
 
+replace encryption => ../encryption
+
 require (
+	encryption v0.0.0-00010101000000-000000000000
 	events v0.0.0-00010101000000-000000000000
 	github.com/IBM/sarama v1.43.3
 	github.com/spf13/viper v1.19.0

@@ -7,7 +7,6 @@ replace events => ../events
 require (
 	events v0.0.0-00010101000000-000000000000
 	github.com/IBM/sarama v1.43.3
-	github.com/google/uuid v1.6.0
 	github.com/spf13/viper v1.19.0
 	gorm.io/driver/mysql v1.5.7
 	gorm.io/gorm v1.25.11

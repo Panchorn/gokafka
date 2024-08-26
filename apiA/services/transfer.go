@@ -3,6 +3,8 @@ package services
 import (
 	"apiA/commands"
 	"apiA/repositories"
+	"encoding/base64"
+	"encryption"
 	"errors"
 	"events"
 	"github.com/google/uuid"
@@ -39,13 +41,20 @@ func (obj transferService) Transfer(command commands.TransferCommand) error {
 		return errors.New("duplicate transaction")
 	}
 
+	cipher, err := encryption.Encrypt([]byte(command.SecretToken), encryption.Key())
+	if err != nil {
+		return errors.New("error while encrypting secret token")
+	}
+
+	secretToken := base64.StdEncoding.EncodeToString(cipher)
+
 	event := events.TransferCreateEvent{
 		TransactionID: uuid.NewString(),
 		RefID:         command.RefID,
 		FromID:        command.FromID,
 		ToID:          command.ToID,
 		Amount:        command.Amount,
-		SecretToken:   command.SecretToken,
+		SecretToken:   secretToken,
 	}
 
 	transaction := repositories.Transaction{
@@ -55,6 +64,7 @@ func (obj transferService) Transfer(command commands.TransferCommand) error {
 		FromID:      event.FromID,
 		ToID:        event.ToID,
 		Amount:      event.Amount,
+		SecretToken: event.SecretToken,
 		CreatedDate: time.Now(),
 		UpdatedDate: time.Now(),
 	}

@@ -1,7 +1,9 @@
 package services
 
 import (
+	"encoding/base64"
 	"encoding/json"
+	"encryption"
 	"events"
 	"github.com/IBM/sarama"
 	"github.com/spf13/viper"
@@ -33,18 +35,20 @@ func (obj eventHandler) Handle(topic string, payload []byte) {
 		}
 
 		var callbackEvent events.Event
-		if len(createdEvent.SecretToken) != 0 {
-			log.Println("transfer is in progress")
+
+		secretToken, callbackEvent, ok := decodeSecretToken(createdEvent.RefID, createdEvent.SecretToken)
+		if !ok {
+			callbackEvent = events.TransferExternalFailedEvent{
+				RefID:  createdEvent.RefID,
+				Reason: "secret token is missing or invalid",
+			}
+		} else {
+			log.Println("transfer is in progress with secretToken:", secretToken)
 			time.Sleep(3 * time.Second)
 			log.Println("transaction transferred")
 
 			callbackEvent = events.TransferExternalCompletedEvent{
 				RefID: createdEvent.RefID,
-			}
-		} else {
-			callbackEvent = events.TransferExternalFailedEvent{
-				RefID:  createdEvent.RefID,
-				Reason: "secret token is missing or invalid",
 			}
 		}
 
@@ -64,4 +68,24 @@ func (obj eventHandler) Handle(topic string, payload []byte) {
 	default:
 		log.Println("topic unmatched", topic)
 	}
+}
+
+func decodeSecretToken(refID string, secretToken string) (string, events.TransferExternalFailedEvent, bool) {
+	callbackEvent := events.TransferExternalFailedEvent{
+		RefID:  refID,
+		Reason: "secret token is missing or invalid",
+	}
+	ciphertextDecoded, err := base64.StdEncoding.DecodeString(secretToken)
+	if err != nil {
+		return "", callbackEvent, false
+	}
+	plaintextDecrypted, err := encryption.Decrypt(ciphertextDecoded, encryption.Key())
+	if err != nil {
+		return "", callbackEvent, false
+	}
+	plaintext := string(plaintextDecrypted)
+	if plaintext == "" {
+		return "", callbackEvent, false
+	}
+	return plaintext, callbackEvent, true
 }

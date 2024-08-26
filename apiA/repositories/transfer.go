@@ -15,7 +15,7 @@ type Transaction struct {
 	Status      string
 	Remark      string
 	Amount      float64
-	secretToken string
+	SecretToken string
 	CreatedDate time.Time
 	UpdatedDate time.Time
 }
