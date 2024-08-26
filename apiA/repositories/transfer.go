@@ -13,14 +13,16 @@ type Transaction struct {
 	FromID      string
 	ToID        string
 	Status      string
+	Remark      string
 	Amount      float64
+	secretToken string
 	CreatedDate time.Time
 	UpdatedDate time.Time
 }
 
 type TransactionRepository interface {
 	Save(transaction Transaction) error
-	//FindAll() (transactions []Transaction, err error)
+	FindAll() (transactions []Transaction, err error)
 	ExistsByRefID(refID string) (exists bool, err error)
 	FindByID(id string) (transaction Transaction, err error)
 }
@@ -38,10 +40,10 @@ func (obj transactionRepository) Save(transaction Transaction) error {
 	return obj.db.Table(tableNameTransactions).Save(transaction).Error
 }
 
-//func (obj transactionRepository) FindAll() (transactions []Transaction, err error) {
-//	err = obj.db.Table(tableNameTransactions).Find(&transactions).Error
-//	return transactions, err
-//}
+func (obj transactionRepository) FindAll() (transactions []Transaction, err error) {
+	err = obj.db.Table(tableNameTransactions).Find(&transactions).Error
+	return transactions, err
+}
 
 func (obj transactionRepository) ExistsByRefID(refID string) (exists bool, err error) {
 	err = obj.db.Table(tableNameTransactions).Select("count(*) > 0").Where("ref_id=?", refID).Find(&exists).Error

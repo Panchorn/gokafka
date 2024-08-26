@@ -32,12 +32,20 @@ func (obj eventHandler) Handle(topic string, payload []byte) {
 			return
 		}
 
-		log.Println("transfer is in progress")
-		time.Sleep(5 * time.Second)
-		log.Println("transaction transferred")
+		var callbackEvent events.Event
+		if len(createdEvent.SecretToken) != 0 {
+			log.Println("transfer is in progress")
+			time.Sleep(3 * time.Second)
+			log.Println("transaction transferred")
 
-		completedEvent := events.TransferExternalCompletedEvent{
-			RefID: createdEvent.RefID,
+			callbackEvent = events.TransferExternalCompletedEvent{
+				RefID: createdEvent.RefID,
+			}
+		} else {
+			callbackEvent = events.TransferExternalFailedEvent{
+				RefID:  createdEvent.RefID,
+				Reason: "secret token is missing or invalid",
+			}
 		}
 
 		producer, err := sarama.NewSyncProducer(viper.GetStringSlice("kafka.servers"), nil)
@@ -47,12 +55,12 @@ func (obj eventHandler) Handle(topic string, payload []byte) {
 		defer producer.Close()
 
 		producerHandler := NewEventProducer(producer)
-		err = producerHandler.Produce(completedEvent)
+		err = producerHandler.Produce(callbackEvent)
 		if err != nil {
 			log.Println(err)
 			return
 		}
-		log.Printf("message sent: %#v\n", completedEvent)
+		log.Printf("message sent: %#v\n", callbackEvent)
 	default:
 		log.Println("topic unmatched", topic)
 	}

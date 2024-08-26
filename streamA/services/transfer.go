@@ -8,6 +8,7 @@ import (
 	"log"
 	"reflect"
 	"streamA/repositories"
+	"time"
 )
 
 type EventHandler interface {
@@ -34,10 +35,11 @@ func (obj transferEventHandler) Handle(topic string, payload []byte) {
 		}
 
 		transferExternalEvent := events.TransferExternalEvent{
-			RefID:  event.RefID,
-			FromID: event.FromID,
-			ToID:   event.ToID,
-			Amount: event.Amount,
+			RefID:       event.RefID,
+			FromID:      event.FromID,
+			ToID:        event.ToID,
+			Amount:      event.Amount,
+			SecretToken: event.SecretToken,
 		}
 
 		producer, err := sarama.NewSyncProducer(viper.GetStringSlice("kafka.servers"), nil)
@@ -60,12 +62,35 @@ func (obj transferEventHandler) Handle(topic string, payload []byte) {
 			log.Println(err)
 			return
 		}
-		err = obj.transferRepository.PatchStatus(event.RefID, "COMPLETED")
+		data := map[string]interface{}{
+			"status":       "COMPLETED",
+			"remark":       "transaction completed",
+			"updated_date": time.Now(),
+		}
+		err = obj.transferRepository.PatchTransaction(event.RefID, data)
 		if err != nil {
 			log.Println(err)
 			return
 		}
 		log.Println("patched transaction to COMPLETED")
+	case reflect.TypeOf(events.TransferExternalFailedEvent{}).Name():
+		event := &events.TransferExternalFailedEvent{}
+		err := json.Unmarshal(payload, event)
+		if err != nil {
+			log.Println(err)
+			return
+		}
+		data := map[string]interface{}{
+			"status":       "FAILED",
+			"remark":       event.Reason,
+			"updated_date": time.Now(),
+		}
+		err = obj.transferRepository.PatchTransaction(event.RefID, data)
+		if err != nil {
+			log.Println(err)
+			return
+		}
+		log.Println("patched transaction to FAILED")
 	default:
 		log.Println("topic unmatched", topic)
 	}

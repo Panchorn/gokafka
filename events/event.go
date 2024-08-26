@@ -6,6 +6,7 @@ var Topics = []string{
 	reflect.TypeOf(TransferCreateEvent{}).Name(),
 	reflect.TypeOf(TransferExternalEvent{}).Name(),
 	reflect.TypeOf(TransferExternalCompletedEvent{}).Name(),
+	reflect.TypeOf(TransferExternalFailedEvent{}).Name(),
 	//reflect.TypeOf(OpenAccountEvent{}).Name(),
 	//reflect.TypeOf(DepositFundEvent{}).Name(),
 	//reflect.TypeOf(WithdrawFundEvent{}).Name(),
@@ -29,17 +30,24 @@ type TransferCreateEvent struct {
 	FromID        string
 	ToID          string
 	Amount        float64
+	SecretToken   string
 }
 
 type TransferExternalEvent struct {
-	RefID  string
-	FromID string
-	ToID   string
-	Amount float64
+	RefID       string
+	FromID      string
+	ToID        string
+	Amount      float64
+	SecretToken string
 }
 
 type TransferExternalCompletedEvent struct {
 	RefID string
+}
+
+type TransferExternalFailedEvent struct {
+	RefID  string
+	Reason string
 }
 
 //type OpenAccountEvent struct {

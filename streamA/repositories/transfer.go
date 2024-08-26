@@ -13,13 +13,14 @@ type Transaction struct {
 	FromID      string
 	ToID        string
 	Status      string
+	Remark      string
 	Amount      float64
 	CreatedDate time.Time
 	UpdatedDate time.Time
 }
 
 type TransactionRepository interface {
-	PatchStatus(refID string, status string) error
+	PatchTransaction(refID string, data interface{}) error
 }
 
 type transactionRepository struct {
@@ -31,6 +32,7 @@ func NewTransactionRepository(db *gorm.DB) TransactionRepository {
 	return transactionRepository{db}
 }
 
-func (obj transactionRepository) PatchStatus(refID string, status string) error {
-	return obj.db.Table(tableNameTransactions).Where("ref_id=?", refID).Update("status", status).Update("updated_date", time.Now()).Error
+func (obj transactionRepository) PatchTransaction(refID string, data interface{}) error {
+	//return obj.db.Table(tableNameTransactions).Where("ref_id=?", refID).Update("status", status).Update("updated_date", time.Now()).Error
+	return obj.db.Table(tableNameTransactions).Where("ref_id=?", refID).Updates(data).Error
 }

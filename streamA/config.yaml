@@ -5,6 +5,7 @@ kafka:
   topic-subscriptions:
     - TransferCreateEvent
     - TransferExternalCompletedEvent
+    - TransferExternalFailedEvent
 
 db:
   driver: mysql

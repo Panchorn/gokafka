@@ -10,6 +10,7 @@ import (
 
 type TransferController interface {
 	Transfer(c fiber.Ctx) error
+	TransferTransactions(c fiber.Ctx) error
 }
 
 type transferController struct {
@@ -43,17 +44,41 @@ func (obj transferController) Transfer(c fiber.Ctx) error {
 	return returnSuccess(c, command.RefID)
 }
 
+func (obj transferController) TransferTransactions(c fiber.Ctx) error {
+	start := time.Now()
+
+	transactions, err := obj.transferService.TransferTransactions()
+	if err != nil {
+		log.Println(err)
+		return returnError(c, err)
+	}
+
+	elapsed := time.Since(start)
+	log.Printf("get transfer transactions process took %s", elapsed)
+
+	c.Status(fiber.StatusOK)
+	return returnSuccessBody(c, transactions)
+}
+
 func returnError(c fiber.Ctx, err error) error {
 	return c.JSON(fiber.Map{
 		"success": false,
-		"message": "transfer error: " + err.Error(),
+		"message": "error: " + err.Error(),
 	})
 }
 
 func returnSuccess(c fiber.Ctx, id string) error {
 	return c.JSON(fiber.Map{
 		"success": true,
-		"message": "transfer successfully",
+		"message": "success",
 		"refId":   id,
+	})
+}
+
+func returnSuccessBody(c fiber.Ctx, data interface{}) error {
+	return c.JSON(fiber.Map{
+		"success": true,
+		"message": "success",
+		"data":    data,
 	})
 }

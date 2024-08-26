@@ -5,7 +5,6 @@ import (
 	"apiA/repositories"
 	"errors"
 	"events"
-	"fmt"
 	"github.com/google/uuid"
 	"log"
 	"time"
@@ -15,6 +14,7 @@ var poll = time.Millisecond * 500
 
 type TransferService interface {
 	Transfer(command commands.TransferCommand) error
+	TransferTransactions() ([]repositories.Transaction, error)
 }
 
 type transferService struct {
@@ -45,6 +45,7 @@ func (obj transferService) Transfer(command commands.TransferCommand) error {
 		FromID:        command.FromID,
 		ToID:          command.ToID,
 		Amount:        command.Amount,
+		SecretToken:   command.SecretToken,
 	}
 
 	transaction := repositories.Transaction{
@@ -73,21 +74,29 @@ func (obj transferService) Transfer(command commands.TransferCommand) error {
 
 	ticker := time.NewTicker(poll)
 	defer ticker.Stop()
-	count := 0
 	for {
-		count += 1
 		select {
 		case <-ticker.C:
 			transaction, err := obj.repository.FindByID(transaction.ID)
 			if err != nil {
 				log.Println(err)
-				return errors.New("failed to find transaction")
+				return errors.New("failed to fetch transaction")
 			}
 			if transaction.Status == "COMPLETED" {
-				fmt.Println("completed with count: ", count)
-				ticker.Stop()
 				return nil
+			}
+			if transaction.Status == "FAILED" {
+				return errors.New("transfer failed: " + transaction.Remark)
 			}
 		}
 	}
+}
+
+func (obj transferService) TransferTransactions() ([]repositories.Transaction, error) {
+	transactions, err := obj.repository.FindAll()
+	if err != nil {
+		log.Println(err)
+		return nil, errors.New("failed to find transactions")
+	}
+	return transactions, nil
 }

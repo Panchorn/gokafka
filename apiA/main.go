@@ -62,7 +62,8 @@ func main() {
 
 	app := fiber.New()
 
-	app.Post("/transfer", transferController.Transfer)
+	app.Post("/transfers", transferController.Transfer)
+	app.Get("/transfers/transactions", transferController.TransferTransactions)
 
 	log.Println("Starting app on port 8000")
 	app.Listen(":8000")
