@@ -25,7 +25,7 @@ func init() {
 }
 
 func initDatabase() *gorm.DB {
-	dsn := fmt.Sprintf("%v:%v@tcp(%v:%v)/%v",
+	dsn := fmt.Sprintf("%v:%v@tcp(%v:%v)/%v?parseTime=true",
 		viper.GetString("db.username"),
 		viper.GetString("db.password"),
 		viper.GetString("db.host"),

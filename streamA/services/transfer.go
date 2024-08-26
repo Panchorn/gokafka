@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"events"
 	"github.com/IBM/sarama"
-	"github.com/google/uuid"
 	"github.com/spf13/viper"
 	"log"
 	"reflect"
@@ -33,25 +32,6 @@ func (obj transferEventHandler) Handle(topic string, payload []byte) {
 			log.Println(err)
 			return
 		}
-		id, err := uuid.NewUUID()
-		if err != nil {
-			log.Println(err)
-			return
-		}
-		transaction := repositories.Transaction{
-			ID:     id.String(),
-			RefID:  event.RefID,
-			Status: "AWAITING",
-			FromID: event.FromID,
-			ToID:   event.ToID,
-			Amount: event.Amount,
-		}
-		err = obj.transferRepository.Save(transaction)
-		if err != nil {
-			log.Println(err)
-			return
-		}
-		log.Println("saved transaction")
 
 		transferExternalEvent := events.TransferExternalEvent{
 			RefID:  event.RefID,

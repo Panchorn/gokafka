@@ -33,7 +33,7 @@ func (obj eventHandler) Handle(topic string, payload []byte) {
 		}
 
 		log.Println("transfer is in progress")
-		time.Sleep(3 * time.Second)
+		time.Sleep(5 * time.Second)
 		log.Println("transaction transferred")
 
 		completedEvent := events.TransferExternalCompletedEvent{

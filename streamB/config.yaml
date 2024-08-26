@@ -1,6 +1,6 @@
 kafka:
   servers:
-    - localhost:9092
+    - 127.0.0.1:9092
   group: streamB
   topic-subscriptions:
     - TransferExternalEvent
