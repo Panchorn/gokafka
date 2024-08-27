@@ -44,7 +44,7 @@ func (obj eventHandler) Handle(topic string, payload []byte) {
 			}
 		} else {
 			log.Println("transfer is in progress with secretToken:", secretToken)
-			time.Sleep(10 * time.Second)
+			time.Sleep(500 * time.Millisecond)
 			log.Println("transaction transferred")
 
 			callbackEvent = events.TransferExternalCompletedEvent{

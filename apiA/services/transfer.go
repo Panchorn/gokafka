@@ -12,7 +12,7 @@ import (
 	"time"
 )
 
-var poll = time.Millisecond * 500
+var poll = time.Millisecond * 100
 
 type TransferService interface {
 	Transfer(command commands.TransferCommand) error
