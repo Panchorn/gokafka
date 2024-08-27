@@ -14,3 +14,7 @@ db:
   username: local_user
   password: p@ssw0rd
   database: local_db
+
+redis:
+  host: 127.0.0.1
+  port: 6379

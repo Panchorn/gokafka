@@ -24,7 +24,7 @@ type TransactionRepository interface {
 	Save(transaction Transaction) error
 	FindAll() (transactions []Transaction, err error)
 	ExistsByRefID(refID string) (exists bool, err error)
-	FindByID(id string) (transaction Transaction, err error)
+	FindByRefID(refID string) (transaction Transaction, err error)
 }
 
 type transactionRepository struct {
@@ -50,7 +50,7 @@ func (obj transactionRepository) ExistsByRefID(refID string) (exists bool, err e
 	return exists, err
 }
 
-func (obj transactionRepository) FindByID(id string) (transaction Transaction, err error) {
-	err = obj.db.Table(tableNameTransactions).Where("id=?", id).First(&transaction).Error
+func (obj transactionRepository) FindByRefID(refID string) (transaction Transaction, err error) {
+	err = obj.db.Table(tableNameTransactions).Where("ref_id=?", refID).First(&transaction).Error
 	return transaction, err
 }

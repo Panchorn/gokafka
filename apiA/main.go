@@ -6,6 +6,7 @@ import (
 	"apiA/services"
 	"fmt"
 	"github.com/IBM/sarama"
+	"github.com/go-redis/redis/v8"
 	"github.com/gofiber/fiber/v3"
 	"github.com/spf13/viper"
 	"gorm.io/driver/mysql"
@@ -46,8 +47,16 @@ func initDatabase() *gorm.DB {
 	return db
 }
 
+func initRedis() *redis.Client {
+	address := fmt.Sprintf("%v:%v", viper.GetString("redis.host"), viper.GetInt("redis.port"))
+	return redis.NewClient(&redis.Options{
+		Addr: address,
+	})
+}
+
 func main() {
 	db := initDatabase()
+	redisClient := initRedis()
 	transactionRepository := repositories.NewTransactionRepository(db)
 
 	producer, err := sarama.NewSyncProducer(viper.GetStringSlice("kafka.servers"), nil)
@@ -57,7 +66,8 @@ func main() {
 	defer producer.Close()
 
 	eventProducer := services.NewEventProducer(producer)
-	transferService := services.NewTransferService(eventProducer, transactionRepository)
+	transactionServiceRedis := services.NewTransactionServiceRedis(transactionRepository, redisClient)
+	transferService := services.NewTransferService(eventProducer, transactionRepository, transactionServiceRedis)
 	transferController := controllers.NewTransferController(transferService)
 
 	app := fiber.New()

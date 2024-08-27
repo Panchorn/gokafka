@@ -17,10 +17,11 @@ type EventHandler interface {
 
 type transferEventHandler struct {
 	transferRepository repositories.TransactionRepository
+	redis              TransactionService
 }
 
-func NewTransferEventHandler(transferRepository repositories.TransactionRepository) EventHandler {
-	return transferEventHandler{transferRepository}
+func NewTransferEventHandler(transferRepository repositories.TransactionRepository, redis TransactionService) EventHandler {
+	return transferEventHandler{transferRepository, redis}
 }
 
 func (obj transferEventHandler) Handle(topic string, payload []byte) {
@@ -72,6 +73,11 @@ func (obj transferEventHandler) Handle(topic string, payload []byte) {
 			log.Println(err)
 			return
 		}
+		err = evictTransaction(obj, event.RefID)
+		if err != nil {
+			log.Println(err)
+			return
+		}
 		log.Println("patched transaction to COMPLETED")
 	case reflect.TypeOf(events.TransferExternalFailedEvent{}).Name():
 		event := &events.TransferExternalFailedEvent{}
@@ -90,8 +96,23 @@ func (obj transferEventHandler) Handle(topic string, payload []byte) {
 			log.Println(err)
 			return
 		}
+		err = evictTransaction(obj, event.RefID)
+		if err != nil {
+			log.Println(err)
+			return
+		}
 		log.Println("patched transaction to FAILED")
 	default:
 		log.Println("topic unmatched", topic)
 	}
+}
+
+func evictTransaction(obj transferEventHandler, refID string) error {
+	err := obj.redis.EvictTransaction(refID)
+	if err != nil {
+		log.Println(err)
+		return err
+	}
+	log.Println("redis transaction evicted")
+	return nil
 }

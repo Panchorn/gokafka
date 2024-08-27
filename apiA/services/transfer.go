@@ -22,10 +22,11 @@ type TransferService interface {
 type transferService struct {
 	eventProducer EventProducer
 	repository    repositories.TransactionRepository
+	redis         TransactionService
 }
 
-func NewTransferService(eventProducer EventProducer, repository repositories.TransactionRepository) TransferService {
-	return transferService{eventProducer, repository}
+func NewTransferService(eventProducer EventProducer, repository repositories.TransactionRepository, redis TransactionService) TransferService {
+	return transferService{eventProducer, repository, redis}
 }
 
 func (obj transferService) Transfer(command commands.TransferCommand) error {
@@ -87,7 +88,7 @@ func (obj transferService) Transfer(command commands.TransferCommand) error {
 	for {
 		select {
 		case <-ticker.C:
-			transaction, err := obj.repository.FindByID(transaction.ID)
+			transaction, err := obj.redis.GetTransaction(transaction.RefID)
 			if err != nil {
 				log.Println(err)
 				return errors.New("failed to fetch transaction")

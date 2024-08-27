@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/IBM/sarama"
+	"github.com/go-redis/redis/v8"
 	"github.com/spf13/viper"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
@@ -44,6 +45,13 @@ func initDatabase() *gorm.DB {
 	return db
 }
 
+func initRedis() *redis.Client {
+	address := fmt.Sprintf("%v:%v", viper.GetString("redis.host"), viper.GetInt("redis.port"))
+	return redis.NewClient(&redis.Options{
+		Addr: address,
+	})
+}
+
 func main() {
 	consumer, err := sarama.NewConsumerGroup(viper.GetStringSlice("kafka.servers"), viper.GetString("kafka.group"), nil)
 	if err != nil {
@@ -52,8 +60,11 @@ func main() {
 	defer consumer.Close()
 
 	db := initDatabase()
+	redisClient := initRedis()
+
 	transactionRepository := repositories.NewTransactionRepository(db)
-	transferEventHandler := services.NewTransferEventHandler(transactionRepository)
+	transactionServiceRedis := services.NewTransactionServiceRedis(transactionRepository, redisClient)
+	transferEventHandler := services.NewTransferEventHandler(transactionRepository, transactionServiceRedis)
 	transferConsumerHandler := services.NewConsumerHandler(transferEventHandler)
 
 	fmt.Println("streamA started...")
