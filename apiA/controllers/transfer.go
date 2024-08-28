@@ -3,14 +3,15 @@ package controllers
 import (
 	"apiA/commands"
 	"apiA/services"
-	"github.com/gofiber/fiber/v3"
+	"github.com/labstack/echo/v4"
 	"logs"
+	"net/http"
 	"time"
 )
 
 type TransferController interface {
-	Transfer(c fiber.Ctx) error
-	TransferTransactions(c fiber.Ctx) error
+	Transfer(c echo.Context) error
+	TransferTransactions(c echo.Context) error
 }
 
 type transferController struct {
@@ -21,10 +22,10 @@ func NewTransferController(transferService services.TransferService) TransferCon
 	return transferController{transferService}
 }
 
-func (obj transferController) Transfer(c fiber.Ctx) error {
+func (obj transferController) Transfer(c echo.Context) error {
 	command := commands.TransferCommand{}
 
-	err := c.Bind().JSON(&command)
+	err := c.Bind(&command)
 	if err != nil {
 		logs.Error(err)
 		return returnError(c, err)
@@ -40,11 +41,10 @@ func (obj transferController) Transfer(c fiber.Ctx) error {
 		return returnError(c, err)
 	}
 
-	c.Status(fiber.StatusOK)
 	return returnSuccess(c, command.RefID)
 }
 
-func (obj transferController) TransferTransactions(c fiber.Ctx) error {
+func (obj transferController) TransferTransactions(c echo.Context) error {
 	start := time.Now()
 
 	transactions, err := obj.transferService.TransferTransactions()
@@ -56,27 +56,26 @@ func (obj transferController) TransferTransactions(c fiber.Ctx) error {
 	elapsed := time.Since(start)
 	logs.Info("get transfer transactions process took " + elapsed.String())
 
-	c.Status(fiber.StatusOK)
 	return returnSuccessBody(c, transactions)
 }
 
-func returnError(c fiber.Ctx, err error) error {
-	return c.JSON(fiber.Map{
+func returnError(c echo.Context, err error) error {
+	return c.JSON(http.StatusInternalServerError, map[string]interface{}{
 		"success": false,
 		"message": "error: " + err.Error(),
 	})
 }
 
-func returnSuccess(c fiber.Ctx, id string) error {
-	return c.JSON(fiber.Map{
+func returnSuccess(c echo.Context, id string) error {
+	return c.JSON(http.StatusOK, map[string]interface{}{
 		"success": true,
 		"message": "success",
 		"refId":   id,
 	})
 }
 
-func returnSuccessBody(c fiber.Ctx, data interface{}) error {
-	return c.JSON(fiber.Map{
+func returnSuccessBody(c echo.Context, data interface{}) error {
+	return c.JSON(http.StatusOK, map[string]interface{}{
 		"success": true,
 		"message": "success",
 		"data":    data,

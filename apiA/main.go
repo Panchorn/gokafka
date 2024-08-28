@@ -7,7 +7,7 @@ import (
 	"fmt"
 	"github.com/IBM/sarama"
 	"github.com/go-redis/redis/v8"
-	"github.com/gofiber/fiber/v3"
+	"github.com/labstack/echo/v4"
 	"github.com/spf13/viper"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
@@ -70,11 +70,11 @@ func main() {
 	transferService := services.NewTransferService(eventProducer, transactionRepository, transactionServiceRedis)
 	transferController := controllers.NewTransferController(transferService)
 
-	app := fiber.New()
+	app := echo.New()
 
-	app.Post("/transfers", transferController.Transfer)
-	app.Get("/transfers/transactions", transferController.TransferTransactions)
+	app.POST("/transfers", transferController.Transfer)
+	app.GET("/transfers/transactions", transferController.TransferTransactions)
 
 	logs.Info("Starting app on port 8000")
-	app.Listen(":8000")
+	app.Logger.Fatal(app.Start(fmt.Sprintf(":%v", viper.GetInt("app.port"))))
 }
