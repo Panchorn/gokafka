@@ -1,6 +1,9 @@
 package events
 
-import "reflect"
+import (
+	"fmt"
+	"reflect"
+)
 
 var Topics = []string{
 	reflect.TypeOf(TransferCreateEvent{}).Name(),
@@ -10,6 +13,7 @@ var Topics = []string{
 }
 
 type Event interface {
+	ToString() string
 }
 
 type TransferCreateEvent struct {
@@ -36,4 +40,20 @@ type TransferExternalCompletedEvent struct {
 type TransferExternalFailedEvent struct {
 	RefID  string
 	Reason string
+}
+
+func (event TransferCreateEvent) ToString() string {
+	return fmt.Sprintf("%#v", event)
+}
+
+func (event TransferExternalEvent) ToString() string {
+	return fmt.Sprintf("%#v", event)
+}
+
+func (event TransferExternalCompletedEvent) ToString() string {
+	return fmt.Sprintf("%#v", event)
+}
+
+func (event TransferExternalFailedEvent) ToString() string {
+	return fmt.Sprintf("%#v", event)
 }

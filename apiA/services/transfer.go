@@ -8,7 +8,7 @@ import (
 	"errors"
 	"events"
 	"github.com/google/uuid"
-	"log"
+	"logs"
 	"time"
 )
 
@@ -71,15 +71,15 @@ func (obj transferService) Transfer(command commands.TransferCommand) error {
 	}
 	err = obj.repository.Save(transaction)
 	if err != nil {
-		log.Println(err)
+		logs.Error(err)
 		return errors.New("failed to save transfer transaction")
 	}
-	log.Println("saved transaction")
+	logs.Info("saved transaction")
 
-	log.Printf("%#v", event)
+	logs.Info("event" + event.ToString())
 	err = obj.eventProducer.Produce(event)
 	if err != nil {
-		log.Println(err)
+		logs.Error(err)
 		return errors.New("failed to produce event")
 	}
 
@@ -90,7 +90,7 @@ func (obj transferService) Transfer(command commands.TransferCommand) error {
 		case <-ticker.C:
 			transaction, err := obj.redis.GetTransaction(transaction.RefID)
 			if err != nil {
-				log.Println(err)
+				logs.Error(err)
 				return errors.New("failed to fetch transaction")
 			}
 			if transaction.Status == "COMPLETED" {
@@ -106,7 +106,7 @@ func (obj transferService) Transfer(command commands.TransferCommand) error {
 func (obj transferService) TransferTransactions() ([]repositories.Transaction, error) {
 	transactions, err := obj.repository.FindAll()
 	if err != nil {
-		log.Println(err)
+		logs.Error(err)
 		return nil, errors.New("failed to find transactions")
 	}
 	return transactions, nil

@@ -2,9 +2,9 @@ package main
 
 import (
 	"context"
-	"fmt"
 	"github.com/IBM/sarama"
 	"github.com/spf13/viper"
+	"logs"
 	"streamB/services"
 	"strings"
 )
@@ -30,7 +30,7 @@ func main() {
 	eventHandler := services.NewEventHandler()
 	consumerHandler := services.NewConsumerHandler(eventHandler)
 
-	fmt.Println("streamB started...")
+	logs.Info("streamB started...")
 	topic := viper.GetStringSlice("kafka.topic-subscriptions")
 	for {
 		consumer.Consume(context.Background(), topic, consumerHandler)

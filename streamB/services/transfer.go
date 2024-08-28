@@ -7,9 +7,8 @@ import (
 	"events"
 	"github.com/IBM/sarama"
 	"github.com/spf13/viper"
-	"log"
+	"logs"
 	"reflect"
-	"time"
 )
 
 type EventHandler interface {
@@ -24,13 +23,13 @@ func NewEventHandler() EventHandler {
 }
 
 func (obj eventHandler) Handle(topic string, payload []byte) {
-	log.Printf("handling topic %#v\n\n", topic)
+	logs.Info("handling topic " + topic)
 	switch topic {
 	case reflect.TypeOf(events.TransferExternalEvent{}).Name():
 		createdEvent := &events.TransferExternalEvent{}
 		err := json.Unmarshal(payload, createdEvent)
 		if err != nil {
-			log.Println(err)
+			logs.Error(err)
 			return
 		}
 
@@ -43,9 +42,9 @@ func (obj eventHandler) Handle(topic string, payload []byte) {
 				Reason: "secret token is missing or invalid",
 			}
 		} else {
-			log.Println("transfer is in progress with secretToken:", secretToken)
-			time.Sleep(500 * time.Millisecond)
-			log.Println("transaction transferred")
+			logs.Info("transfer is in progress with secretToken " + secretToken)
+			//time.Sleep(500 * time.Millisecond)
+			logs.Info("transaction transferred")
 
 			callbackEvent = events.TransferExternalCompletedEvent{
 				RefID: createdEvent.RefID,
@@ -61,12 +60,12 @@ func (obj eventHandler) Handle(topic string, payload []byte) {
 		producerHandler := NewEventProducer(producer)
 		err = producerHandler.Produce(callbackEvent)
 		if err != nil {
-			log.Println(err)
+			logs.Error(err)
 			return
 		}
-		log.Printf("message sent: %#v\n", callbackEvent)
+		logs.Info("message sent: " + callbackEvent.ToString())
 	default:
-		log.Println("topic unmatched", topic)
+		logs.Info("topic unmatched " + topic)
 	}
 }
 

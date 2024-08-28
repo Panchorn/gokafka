@@ -9,6 +9,7 @@ import (
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
+	"logs"
 	"streamA/repositories"
 	"streamA/services"
 	"strings"
@@ -67,7 +68,7 @@ func main() {
 	transferEventHandler := services.NewTransferEventHandler(transactionRepository, transactionServiceRedis)
 	transferConsumerHandler := services.NewConsumerHandler(transferEventHandler)
 
-	fmt.Println("streamA started...")
+	logs.Info("streamA started...")
 	for {
 		consumer.Consume(context.Background(), viper.GetStringSlice("kafka.topic-subscriptions"), transferConsumerHandler)
 	}

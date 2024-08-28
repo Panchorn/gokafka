@@ -6,8 +6,7 @@ import (
 	"encoding/json"
 	"github.com/go-redis/redis/v8"
 	"github.com/spf13/viper"
-	"log"
-
+	"logs"
 	"time"
 )
 
@@ -25,7 +24,7 @@ func NewTransactionServiceRedis(transactionRepository repositories.TransactionRe
 }
 
 func (r transactionServiceRedis) GetTransaction(refID string) (transaction repositories.Transaction, err error) {
-	log.Println("getting transaction from redis")
+	logs.Info("getting transaction from redis")
 	key := "service:transactions:" + refID
 
 	// Redis Get
@@ -33,7 +32,7 @@ func (r transactionServiceRedis) GetTransaction(refID string) (transaction repos
 	if err == nil {
 		err = json.Unmarshal([]byte(transactionJson), &transaction)
 		if err == nil {
-			log.Println("transaction cache", transaction)
+			logs.Info("transaction cache " + transaction.ToString())
 			return transaction, nil
 		}
 	}
@@ -56,6 +55,6 @@ func (r transactionServiceRedis) GetTransaction(refID string) (transaction repos
 		return repositories.Transaction{}, err
 	}
 
-	log.Println("transaction cache", transaction)
+	logs.Info("transaction cache " + transaction.ToString())
 	return transaction, nil
 }

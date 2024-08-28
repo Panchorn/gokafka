@@ -5,7 +5,7 @@ import (
 	"events"
 	"github.com/IBM/sarama"
 	"github.com/spf13/viper"
-	"log"
+	"logs"
 	"reflect"
 	"streamA/repositories"
 	"time"
@@ -25,13 +25,13 @@ func NewTransferEventHandler(transferRepository repositories.TransactionReposito
 }
 
 func (obj transferEventHandler) Handle(topic string, payload []byte) {
-	log.Printf("handling topic %#v\n", topic)
+	logs.Info("handling topic " + topic)
 	switch topic {
 	case reflect.TypeOf(events.TransferCreateEvent{}).Name():
 		event := &events.TransferCreateEvent{}
 		err := json.Unmarshal(payload, event)
 		if err != nil {
-			log.Println(err)
+			logs.Error(err)
 			return
 		}
 
@@ -52,15 +52,15 @@ func (obj transferEventHandler) Handle(topic string, payload []byte) {
 		producerHandler := NewEventProducer(producer)
 		err = producerHandler.Produce(transferExternalEvent)
 		if err != nil {
-			log.Println(err)
+			logs.Error(err)
 			return
 		}
-		log.Printf("message sent: %#v\n", transferExternalEvent)
+		logs.Info("message sent: " + transferExternalEvent.ToString())
 	case reflect.TypeOf(events.TransferExternalCompletedEvent{}).Name():
 		event := &events.TransferExternalCompletedEvent{}
 		err := json.Unmarshal(payload, event)
 		if err != nil {
-			log.Println(err)
+			logs.Error(err)
 			return
 		}
 		data := map[string]interface{}{
@@ -70,20 +70,20 @@ func (obj transferEventHandler) Handle(topic string, payload []byte) {
 		}
 		err = obj.transferRepository.PatchTransaction(event.RefID, data)
 		if err != nil {
-			log.Println(err)
+			logs.Error(err)
 			return
 		}
 		err = evictTransaction(obj, event.RefID)
 		if err != nil {
-			log.Println(err)
+			logs.Error(err)
 			return
 		}
-		log.Println("patched transaction to COMPLETED")
+		logs.Info("patched transaction to COMPLETED")
 	case reflect.TypeOf(events.TransferExternalFailedEvent{}).Name():
 		event := &events.TransferExternalFailedEvent{}
 		err := json.Unmarshal(payload, event)
 		if err != nil {
-			log.Println(err)
+			logs.Error(err)
 			return
 		}
 		data := map[string]interface{}{
@@ -93,26 +93,26 @@ func (obj transferEventHandler) Handle(topic string, payload []byte) {
 		}
 		err = obj.transferRepository.PatchTransaction(event.RefID, data)
 		if err != nil {
-			log.Println(err)
+			logs.Error(err)
 			return
 		}
 		err = evictTransaction(obj, event.RefID)
 		if err != nil {
-			log.Println(err)
+			logs.Error(err)
 			return
 		}
-		log.Println("patched transaction to FAILED")
+		logs.Info("patched transaction to FAILED")
 	default:
-		log.Println("topic unmatched", topic)
+		logs.Info("topic unmatched: " + topic)
 	}
 }
 
 func evictTransaction(obj transferEventHandler, refID string) error {
 	err := obj.redis.EvictTransaction(refID)
 	if err != nil {
-		log.Println(err)
+		logs.Error(err)
 		return err
 	}
-	log.Println("redis transaction evicted")
+	logs.Info("redis transaction evicted")
 	return nil
 }

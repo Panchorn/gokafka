@@ -1,6 +1,7 @@
 package repositories
 
 import (
+	"fmt"
 	"gorm.io/gorm"
 	"time"
 )
@@ -53,4 +54,8 @@ func (obj transactionRepository) ExistsByRefID(refID string) (exists bool, err e
 func (obj transactionRepository) FindByRefID(refID string) (transaction Transaction, err error) {
 	err = obj.db.Table(tableNameTransactions).Where("ref_id=?", refID).First(&transaction).Error
 	return transaction, err
+}
+
+func (transaction Transaction) ToString() string {
+	return fmt.Sprintf("%#v", transaction)
 }

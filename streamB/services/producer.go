@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"events"
 	"github.com/IBM/sarama"
-	"log"
+	"logs"
 	"reflect"
 )
 
@@ -22,11 +22,11 @@ func NewEventProducer(producer sarama.SyncProducer) EventProducer {
 
 func (obj eventProducer) Produce(event events.Event) error {
 	topic := reflect.TypeOf(event).Name()
-	log.Printf("producing message in topic %s", topic)
+	logs.Info("producing message in topic " + topic)
 
 	value, err := json.Marshal(event)
 	if err != nil {
-		log.Println(err)
+		logs.Error(err)
 		return err
 	}
 
@@ -37,7 +37,7 @@ func (obj eventProducer) Produce(event events.Event) error {
 
 	_, _, err = obj.producer.SendMessage(&msg)
 	if err != nil {
-		log.Println(err)
+		logs.Error(err)
 		return err
 	}
 	return nil

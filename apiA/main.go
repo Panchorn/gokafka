@@ -12,7 +12,7 @@ import (
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
-	"log"
+	"logs"
 	"strings"
 )
 
@@ -75,6 +75,6 @@ func main() {
 	app.Post("/transfers", transferController.Transfer)
 	app.Get("/transfers/transactions", transferController.TransferTransactions)
 
-	log.Println("Starting app on port 8000")
+	logs.Info("Starting app on port 8000")
 	app.Listen(":8000")
 }

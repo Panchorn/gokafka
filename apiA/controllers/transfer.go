@@ -4,7 +4,7 @@ import (
 	"apiA/commands"
 	"apiA/services"
 	"github.com/gofiber/fiber/v3"
-	"log"
+	"logs"
 	"time"
 )
 
@@ -26,17 +26,17 @@ func (obj transferController) Transfer(c fiber.Ctx) error {
 
 	err := c.Bind().JSON(&command)
 	if err != nil {
-		log.Println(err)
+		logs.Error(err)
 		return returnError(c, err)
 	}
 
 	start := time.Now()
 	err = obj.transferService.Transfer(command)
 	elapsed := time.Since(start)
-	log.Printf("transfer process took %s", elapsed)
+	logs.Info("transfer process took " + elapsed.String())
 
 	if err != nil {
-		log.Println(err)
+		logs.Error(err)
 		return returnError(c, err)
 	}
 
@@ -49,12 +49,12 @@ func (obj transferController) TransferTransactions(c fiber.Ctx) error {
 
 	transactions, err := obj.transferService.TransferTransactions()
 	if err != nil {
-		log.Println(err)
+		logs.Error(err)
 		return returnError(c, err)
 	}
 
 	elapsed := time.Since(start)
-	log.Printf("get transfer transactions process took %s", elapsed)
+	logs.Info("get transfer transactions process took " + elapsed.String())
 
 	c.Status(fiber.StatusOK)
 	return returnSuccessBody(c, transactions)
