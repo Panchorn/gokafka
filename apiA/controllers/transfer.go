@@ -3,6 +3,7 @@ package controllers
 import (
 	"apiA/commands"
 	"apiA/services"
+	"encoding/json"
 	"github.com/labstack/echo/v4"
 	"logs"
 	"net/http"
@@ -25,7 +26,7 @@ func NewTransferController(transferService services.TransferService) TransferCon
 func (obj transferController) Transfer(c echo.Context) error {
 	command := commands.TransferCommand{}
 
-	err := c.Bind(&command)
+	err := json.NewDecoder(c.Request().Body).Decode(&command)
 	if err != nil {
 		logs.Error(err)
 		return returnError(c, err)
