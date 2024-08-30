@@ -4,6 +4,14 @@ services:
     container_name: app-api-a
     ports:
       - '8000:8000'
+    deploy:
+      resources:
+        reservations:
+          cpus: '0.5'
+          memory: 20M
+        limits:
+          cpus: '0.75'
+          memory: 50M
     networks:
       - mysql_mysql
       - kafka_kafka
@@ -12,6 +20,14 @@ services:
   app-stream-a:
     image: gokafka-stream-a:latest
     container_name: app-stream-a
+    deploy:
+      resources:
+        reservations:
+          cpus: '0.5'
+          memory: 20M
+        limits:
+          cpus: '0.75'
+          memory: 50M
     networks:
       - mysql_mysql
       - kafka_kafka
@@ -20,6 +36,14 @@ services:
   app-stream-b:
     image: gokafka-stream-b:latest
     container_name: app-stream-b
+    deploy:
+      resources:
+        reservations:
+          cpus: '0.5'
+          memory: 20M
+        limits:
+          cpus: '0.75'
+          memory: 50M
     networks:
       - mysql_mysql
       - kafka_kafka
