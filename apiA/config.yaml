@@ -3,8 +3,7 @@ app:
 
 kafka:
   servers:
-    - localhost:9092
-  group: apiA
+    - localhost:9094
 
 db:
   driver: mysql

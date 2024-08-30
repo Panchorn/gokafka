@@ -12,7 +12,6 @@ import (
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
-	"logs"
 	"strings"
 )
 
@@ -20,6 +19,7 @@ func init() {
 	viper.SetConfigName("config")
 	viper.SetConfigType("yaml")
 	viper.AddConfigPath(".")
+	viper.AddConfigPath("/app")
 	viper.AutomaticEnv()
 	viper.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
 	if err := viper.ReadInConfig(); err != nil {
@@ -37,6 +37,8 @@ func initDatabase() *gorm.DB {
 	)
 
 	dial := mysql.Open(dsn)
+
+	fmt.Println(dsn)
 
 	db, err := gorm.Open(dial, &gorm.Config{
 		Logger: logger.Default.LogMode(logger.Silent),
@@ -75,6 +77,5 @@ func main() {
 	app.POST("/transfers", transferController.Transfer)
 	app.GET("/transfers/transactions", transferController.TransferTransactions)
 
-	logs.Info("Starting app on port 8000")
 	app.Logger.Fatal(app.Start(fmt.Sprintf(":%v", viper.GetInt("app.port"))))
 }

@@ -1,0 +1,37 @@
+services:
+  app-api-a:
+    image: gokafka-api-a:latest
+    container_name: app-api-a
+    ports:
+      - '8000:8000'
+    networks:
+      - mysql_mysql
+      - kafka_kafka
+      - redis_redis
+
+  app-stream-a:
+    image: gokafka-stream-a:latest
+    container_name: app-stream-a
+    networks:
+      - mysql_mysql
+      - kafka_kafka
+      - redis_redis
+
+  app-stream-b:
+    image: gokafka-stream-b:latest
+    container_name: app-stream-b
+    networks:
+      - mysql_mysql
+      - kafka_kafka
+      - redis_redis
+
+networks:
+  kafka_kafka:
+    name: kafka_kafka
+    external: true
+  mysql_mysql:
+    name: mysql_mysql
+    external: true
+  redis_redis:
+    name: redis_redis
+    external: true
