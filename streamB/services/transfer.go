@@ -12,7 +12,7 @@ import (
 )
 
 type EventHandler interface {
-	Handle(topic string, payload []byte)
+	Handle(topic string, key []byte, payload []byte, headers []*sarama.RecordHeader)
 }
 
 type eventHandler struct {
@@ -22,14 +22,15 @@ func NewEventHandler() EventHandler {
 	return eventHandler{}
 }
 
-func (obj eventHandler) Handle(topic string, payload []byte) {
-	logs.Info("handling topic " + topic)
+func (obj eventHandler) Handle(topic string, key []byte, payload []byte, headers []*sarama.RecordHeader) {
+	requestID := string(key)
+	logs.Info(requestID, "handling topic "+topic)
 	switch topic {
 	case reflect.TypeOf(events.TransferExternalEvent{}).Name():
 		createdEvent := &events.TransferExternalEvent{}
 		err := json.Unmarshal(payload, createdEvent)
 		if err != nil {
-			logs.Error(err)
+			logs.Error(requestID, err)
 			return
 		}
 
@@ -42,9 +43,9 @@ func (obj eventHandler) Handle(topic string, payload []byte) {
 				Reason: "secret token is missing or invalid",
 			}
 		} else {
-			logs.Info("transfer is in progress with secretToken " + secretToken)
+			logs.Info(requestID, "transfer is in progress with secretToken "+secretToken)
 			//time.Sleep(500 * time.Millisecond)
-			logs.Info("transaction transferred")
+			logs.Info(requestID, "transaction transferred")
 
 			callbackEvent = events.TransferExternalCompletedEvent{
 				RefID: createdEvent.RefID,
@@ -58,14 +59,14 @@ func (obj eventHandler) Handle(topic string, payload []byte) {
 		defer producer.Close()
 
 		producerHandler := NewEventProducer(producer)
-		err = producerHandler.Produce(callbackEvent)
+		err = producerHandler.Produce(requestID, callbackEvent)
 		if err != nil {
-			logs.Error(err)
+			logs.Error(requestID, err)
 			return
 		}
-		logs.Info("message sent: " + callbackEvent.ToString())
+		logs.Info(requestID, "message sent: "+callbackEvent.ToString())
 	default:
-		logs.Info("topic unmatched " + topic)
+		logs.Info(requestID, "topic unmatched "+topic)
 	}
 }
 

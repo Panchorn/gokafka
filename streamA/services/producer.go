@@ -9,7 +9,7 @@ import (
 )
 
 type EventProducer interface {
-	Produce(event events.Event) error
+	Produce(requestID string, event events.Event) error
 }
 
 type eventProducer struct {
@@ -20,13 +20,13 @@ func NewEventProducer(producer sarama.SyncProducer) EventProducer {
 	return eventProducer{producer}
 }
 
-func (obj eventProducer) Produce(event events.Event) error {
+func (obj eventProducer) Produce(requestID string, event events.Event) error {
 	topic := reflect.TypeOf(event).Name()
-	logs.Info("producing message in topic " + topic)
+	logs.Info(requestID, "producing message in topic "+topic)
 
 	value, err := json.Marshal(event)
 	if err != nil {
-		logs.Error(err)
+		logs.Error(requestID, err)
 		return err
 	}
 
@@ -37,7 +37,7 @@ func (obj eventProducer) Produce(event events.Event) error {
 
 	_, _, err = obj.producer.SendMessage(&msg)
 	if err != nil {
-		logs.Error(err)
+		logs.Error(requestID, err)
 		return err
 	}
 	return nil

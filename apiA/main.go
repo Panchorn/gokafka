@@ -7,14 +7,15 @@ import (
 	"fmt"
 	"github.com/IBM/sarama"
 	"github.com/go-redis/redis/v8"
-	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 	"github.com/spf13/viper"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
+	"logs"
 	"strings"
+	"time"
 )
 
 func init() {
@@ -76,11 +77,15 @@ func main() {
 
 	app := echo.New()
 
-	app.Use(middleware.RequestIDWithConfig(middleware.RequestIDConfig{
-		Generator: func() string {
-			return uuid.NewString()
+	app.Use(middleware.TimeoutWithConfig(middleware.TimeoutConfig{
+		Skipper:      middleware.DefaultSkipper,
+		ErrorMessage: "timeout during request handling",
+		OnTimeoutRouteErrorHandler: func(err error, c echo.Context) {
+			logs.Error("main", "timeout to call "+c.Path())
 		},
+		Timeout: viper.GetDuration("app.http_timeout_in_ms") * time.Millisecond,
 	}))
+	app.Use(middleware.RequestID())
 
 	app.POST("/transfers", transferController.Transfer)
 	app.GET("/transfers/transactions", transferController.TransferTransactions)

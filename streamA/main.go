@@ -69,7 +69,7 @@ func main() {
 	transferEventHandler := services.NewTransferEventHandler(transactionRepository, transactionServiceRedis)
 	transferConsumerHandler := services.NewConsumerHandler(transferEventHandler)
 
-	logs.Info("streamA started...")
+	logs.Info("main", "streamA started...")
 	for {
 		consumer.Consume(context.Background(), viper.GetStringSlice("kafka.topic-subscriptions"), transferConsumerHandler)
 	}

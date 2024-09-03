@@ -12,7 +12,7 @@ import (
 )
 
 type EventHandler interface {
-	Handle(topic string, payload []byte)
+	Handle(topic string, key []byte, payload []byte, headers []*sarama.RecordHeader)
 }
 
 type transferEventHandler struct {
@@ -24,14 +24,19 @@ func NewTransferEventHandler(transferRepository repositories.TransactionReposito
 	return transferEventHandler{transferRepository, redis}
 }
 
-func (obj transferEventHandler) Handle(topic string, payload []byte) {
-	logs.Info("handling topic " + topic)
+func (obj transferEventHandler) Handle(topic string, key []byte, payload []byte, headers []*sarama.RecordHeader) {
+	requestID := string(key)
+	logs.Info(requestID, "handling topic "+topic)
+	for _, header := range headers {
+		logs.Info(requestID, "handling topic with header "+string(header.Key)+" "+string(header.Value))
+	}
+
 	switch topic {
 	case reflect.TypeOf(events.TransferCreateEvent{}).Name():
 		event := &events.TransferCreateEvent{}
 		err := json.Unmarshal(payload, event)
 		if err != nil {
-			logs.Error(err)
+			logs.Error(requestID, err)
 			return
 		}
 
@@ -50,17 +55,17 @@ func (obj transferEventHandler) Handle(topic string, payload []byte) {
 		defer producer.Close()
 
 		producerHandler := NewEventProducer(producer)
-		err = producerHandler.Produce(transferExternalEvent)
+		err = producerHandler.Produce(requestID, transferExternalEvent)
 		if err != nil {
-			logs.Error(err)
+			logs.Error(requestID, err)
 			return
 		}
-		logs.Info("message sent: " + transferExternalEvent.ToString())
+		logs.Info(requestID, "message sent: "+transferExternalEvent.ToString())
 	case reflect.TypeOf(events.TransferExternalCompletedEvent{}).Name():
 		event := &events.TransferExternalCompletedEvent{}
 		err := json.Unmarshal(payload, event)
 		if err != nil {
-			logs.Error(err)
+			logs.Error(requestID, err)
 			return
 		}
 		data := map[string]interface{}{
@@ -70,20 +75,20 @@ func (obj transferEventHandler) Handle(topic string, payload []byte) {
 		}
 		err = obj.transferRepository.PatchTransaction(event.RefID, data)
 		if err != nil {
-			logs.Error(err)
+			logs.Error(requestID, err)
 			return
 		}
-		err = evictTransaction(obj, event.RefID)
+		err = evictTransaction(obj, requestID, event.RefID)
 		if err != nil {
-			logs.Error(err)
+			logs.Error(requestID, err)
 			return
 		}
-		logs.Info("patched transaction to COMPLETED")
+		logs.Info(requestID, "patched transaction to COMPLETED")
 	case reflect.TypeOf(events.TransferExternalFailedEvent{}).Name():
 		event := &events.TransferExternalFailedEvent{}
 		err := json.Unmarshal(payload, event)
 		if err != nil {
-			logs.Error(err)
+			logs.Error(requestID, err)
 			return
 		}
 		data := map[string]interface{}{
@@ -93,26 +98,26 @@ func (obj transferEventHandler) Handle(topic string, payload []byte) {
 		}
 		err = obj.transferRepository.PatchTransaction(event.RefID, data)
 		if err != nil {
-			logs.Error(err)
+			logs.Error(requestID, err)
 			return
 		}
-		err = evictTransaction(obj, event.RefID)
+		err = evictTransaction(obj, requestID, event.RefID)
 		if err != nil {
-			logs.Error(err)
+			logs.Error(requestID, err)
 			return
 		}
-		logs.Info("patched transaction to FAILED")
+		logs.Info(requestID, "patched transaction to FAILED")
 	default:
-		logs.Info("topic unmatched: " + topic)
+		logs.Info(requestID, "topic unmatched: "+topic)
 	}
 }
 
-func evictTransaction(obj transferEventHandler, refID string) error {
+func evictTransaction(obj transferEventHandler, requestID string, refID string) error {
 	err := obj.redis.EvictTransaction(refID)
 	if err != nil {
-		logs.Error(err)
+		logs.Error(requestID, err)
 		return err
 	}
-	logs.Info("redis transaction evicted")
+	logs.Info(requestID, "redis transaction evicted")
 	return nil
 }

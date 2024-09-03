@@ -35,7 +35,6 @@ func (obj eventProducer) Produce(ctx echo.Context, event events.Event, headers [
 	var eventHeaders []sarama.RecordHeader
 	for _, header := range headers {
 		eventHeaders = append(eventHeaders, sarama.RecordHeader{
-			//{Key: []byte(logs.RequestID), Value: []byte("aaa")},
 			Key:   sarama.ByteEncoder(header.Key),
 			Value: sarama.ByteEncoder(header.Value),
 		})
@@ -43,6 +42,7 @@ func (obj eventProducer) Produce(ctx echo.Context, event events.Event, headers [
 
 	msg := sarama.ProducerMessage{
 		Topic:   topic,
+		Key:     sarama.ByteEncoder(requestID),
 		Value:   sarama.ByteEncoder(value),
 		Headers: eventHeaders,
 	}

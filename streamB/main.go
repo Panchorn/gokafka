@@ -31,7 +31,7 @@ func main() {
 	eventHandler := services.NewEventHandler()
 	consumerHandler := services.NewConsumerHandler(eventHandler)
 
-	logs.Info("streamB started...")
+	logs.Info("main", "streamB started...")
 	topic := viper.GetStringSlice("kafka.topic-subscriptions")
 	for {
 		consumer.Consume(context.Background(), topic, consumerHandler)
