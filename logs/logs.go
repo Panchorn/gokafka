@@ -1,13 +1,21 @@
 package logs
 
 import (
+	"fmt"
+	"github.com/labstack/echo/v4"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
+)
+
+const (
+	RequestID       = "requestID"
+	RequestIDLogger = "RequestIDLogger"
 )
 
 var log *zap.Logger
 
 func init() {
+	fmt.Println("logs init")
 	config := zap.NewProductionConfig()
 	config.EncoderConfig.TimeKey = "timestamp"
 	config.EncoderConfig.EncodeTime = zapcore.ISO8601TimeEncoder
@@ -21,19 +29,31 @@ func init() {
 	}
 }
 
-func Info(msg string, fields ...zap.Field) {
+func Info(requestID string, msg string, fields ...zap.Field) {
+	fields = append(fields, zap.String(RequestID, requestID))
 	log.Info(msg, fields...)
 }
 
-func Debug(msg string, fields ...zap.Field) {
+func Debug(requestID string, msg string, fields ...zap.Field) {
+	fields = append(fields, zap.String(RequestID, requestID))
 	log.Debug(msg, fields...)
 }
 
-func Error(msg interface{}, fields ...zap.Field) {
+func Error(requestID string, msg interface{}, fields ...zap.Field) {
+	fields = append(fields, zap.String(RequestID, requestID))
 	switch v := msg.(type) {
 	case error:
 		log.Error(v.Error(), fields...)
 	case string:
 		log.Error(v, fields...)
 	}
+}
+
+func CreateLogContext(c echo.Context) echo.Context {
+	return NewContext(c, zap.String(RequestID, c.Response().Header().Get("X-Request-ID")))
+}
+
+func NewContext(ctx echo.Context, fields ...zap.Field) echo.Context {
+	ctx.Set(RequestIDLogger, log.With(fields...))
+	return ctx
 }

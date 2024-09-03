@@ -8,6 +8,7 @@ import (
 	"errors"
 	"events"
 	"github.com/google/uuid"
+	"github.com/labstack/echo/v4"
 	"logs"
 	"time"
 )
@@ -15,8 +16,8 @@ import (
 var poll = time.Millisecond * 100
 
 type TransferService interface {
-	Transfer(command commands.TransferCommand) error
-	TransferTransactions() ([]repositories.Transaction, error)
+	Transfer(ctx echo.Context, command commands.TransferCommand) error
+	TransferTransactions(ctx echo.Context) ([]repositories.Transaction, error)
 }
 
 type transferService struct {
@@ -29,7 +30,8 @@ func NewTransferService(eventProducer EventProducer, repository repositories.Tra
 	return transferService{eventProducer, repository, redis}
 }
 
-func (obj transferService) Transfer(command commands.TransferCommand) error {
+func (obj transferService) Transfer(ctx echo.Context, command commands.TransferCommand) error {
+	requestID := ctx.Get(logs.RequestID).(string)
 	if command.Amount <= 0 {
 		return errors.New("amount must be greater than zero")
 	}
@@ -71,15 +73,18 @@ func (obj transferService) Transfer(command commands.TransferCommand) error {
 	}
 	err = obj.repository.Save(transaction)
 	if err != nil {
-		logs.Error(err)
+		logs.Error(requestID, err)
 		return errors.New("failed to save transfer transaction")
 	}
-	logs.Info("saved transaction")
+	logs.Info(requestID, "saved transaction")
 
-	logs.Info("event" + event.ToString())
-	err = obj.eventProducer.Produce(event)
+	logs.Info(requestID, "event"+event.ToString())
+	eventHeaders := []events.EventHeader{
+		{logs.RequestID, ctx.Get(logs.RequestID).(string)},
+	}
+	err = obj.eventProducer.Produce(ctx, event, eventHeaders)
 	if err != nil {
-		logs.Error(err)
+		logs.Error(requestID, err)
 		return errors.New("failed to produce event")
 	}
 
@@ -88,9 +93,9 @@ func (obj transferService) Transfer(command commands.TransferCommand) error {
 	for {
 		select {
 		case <-ticker.C:
-			transaction, err := obj.redis.GetTransaction(transaction.RefID)
+			transaction, err := obj.redis.GetTransaction(requestID, transaction.RefID)
 			if err != nil {
-				logs.Error(err)
+				logs.Error(requestID, err)
 				return errors.New("failed to fetch transaction")
 			}
 			if transaction.Status == "COMPLETED" {
@@ -103,10 +108,11 @@ func (obj transferService) Transfer(command commands.TransferCommand) error {
 	}
 }
 
-func (obj transferService) TransferTransactions() ([]repositories.Transaction, error) {
+func (obj transferService) TransferTransactions(ctx echo.Context) ([]repositories.Transaction, error) {
+	requestID := ctx.Get(logs.RequestID).(string)
 	transactions, err := obj.repository.FindAll()
 	if err != nil {
-		logs.Error(err)
+		logs.Error(requestID, err)
 		return nil, errors.New("failed to find transactions")
 	}
 	return transactions, nil

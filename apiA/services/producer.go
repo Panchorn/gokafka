@@ -4,12 +4,13 @@ import (
 	"encoding/json"
 	"events"
 	"github.com/IBM/sarama"
+	"github.com/labstack/echo/v4"
 	"logs"
 	"reflect"
 )
 
 type EventProducer interface {
-	Produce(event events.Event) error
+	Produce(ctx echo.Context, event events.Event, headers []events.EventHeader) error
 }
 
 type eventProducer struct {
@@ -20,24 +21,35 @@ func NewEventProducer(producer sarama.SyncProducer) EventProducer {
 	return eventProducer{producer}
 }
 
-func (obj eventProducer) Produce(event events.Event) error {
+func (obj eventProducer) Produce(ctx echo.Context, event events.Event, headers []events.EventHeader) error {
+	requestID := ctx.Get(logs.RequestID).(string)
 	topic := reflect.TypeOf(event).Name()
-	logs.Info("producing message in topic " + topic)
+	logs.Info(requestID, "producing message in topic "+topic)
 
 	value, err := json.Marshal(event)
 	if err != nil {
-		logs.Error(err)
+		logs.Error(requestID, err)
 		return err
 	}
 
+	var eventHeaders []sarama.RecordHeader
+	for _, header := range headers {
+		eventHeaders = append(eventHeaders, sarama.RecordHeader{
+			//{Key: []byte(logs.RequestID), Value: []byte("aaa")},
+			Key:   sarama.ByteEncoder(header.Key),
+			Value: sarama.ByteEncoder(header.Value),
+		})
+	}
+
 	msg := sarama.ProducerMessage{
-		Topic: topic,
-		Value: sarama.ByteEncoder(value),
+		Topic:   topic,
+		Value:   sarama.ByteEncoder(value),
+		Headers: eventHeaders,
 	}
 
 	_, _, err = obj.producer.SendMessage(&msg)
 	if err != nil {
-		logs.Error(err)
+		logs.Error(requestID, err)
 		return err
 	}
 	return nil

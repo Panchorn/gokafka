@@ -7,7 +7,9 @@ import (
 	"fmt"
 	"github.com/IBM/sarama"
 	"github.com/go-redis/redis/v8"
+	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v4/middleware"
 	"github.com/spf13/viper"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
@@ -73,6 +75,12 @@ func main() {
 	transferController := controllers.NewTransferController(transferService)
 
 	app := echo.New()
+
+	app.Use(middleware.RequestIDWithConfig(middleware.RequestIDConfig{
+		Generator: func() string {
+			return uuid.NewString()
+		},
+	}))
 
 	app.POST("/transfers", transferController.Transfer)
 	app.GET("/transfers/transactions", transferController.TransferTransactions)

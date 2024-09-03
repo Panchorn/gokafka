@@ -16,15 +16,15 @@ type transactionServiceRedis struct {
 }
 
 type TransactionService interface {
-	GetTransaction(refID string) (repositories.Transaction, error)
+	GetTransaction(requestID string, refID string) (repositories.Transaction, error)
 }
 
 func NewTransactionServiceRedis(transactionRepository repositories.TransactionRepository, redisClient *redis.Client) TransactionService {
 	return transactionServiceRedis{transactionRepository, redisClient}
 }
 
-func (r transactionServiceRedis) GetTransaction(refID string) (transaction repositories.Transaction, err error) {
-	logs.Info("getting transaction from redis")
+func (r transactionServiceRedis) GetTransaction(requestID string, refID string) (transaction repositories.Transaction, err error) {
+	logs.Info(requestID, "getting transaction from redis")
 	key := "service:transactions:" + refID
 
 	// Redis Get
@@ -32,7 +32,7 @@ func (r transactionServiceRedis) GetTransaction(refID string) (transaction repos
 	if err == nil {
 		err = json.Unmarshal([]byte(transactionJson), &transaction)
 		if err == nil {
-			logs.Info("transaction cache " + transaction.ToString())
+			logs.Info(requestID, "transaction cache "+transaction.ToString())
 			return transaction, nil
 		}
 	}
@@ -55,6 +55,6 @@ func (r transactionServiceRedis) GetTransaction(refID string) (transaction repos
 		return repositories.Transaction{}, err
 	}
 
-	logs.Info("transaction cache " + transaction.ToString())
+	logs.Info(requestID, "transaction cache "+transaction.ToString())
 	return transaction, nil
 }

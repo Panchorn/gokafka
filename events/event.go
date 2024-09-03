@@ -16,6 +16,11 @@ type Event interface {
 	ToString() string
 }
 
+type EventHeader struct {
+	Key   string
+	Value string
+}
+
 type TransferCreateEvent struct {
 	TransactionID string
 	RefID         string
