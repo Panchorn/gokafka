@@ -78,7 +78,7 @@ func (obj transferService) Transfer(ctx echo.Context, command commands.TransferC
 	}
 	logs.Info(requestID, "saved transaction")
 
-	logs.Info(requestID, "event"+event.ToString())
+	logs.Debug(requestID, "event"+event.ToString())
 	eventHeaders := []events.EventHeader{
 		{logs.RequestID, ctx.Get(logs.RequestID).(string)},
 	}

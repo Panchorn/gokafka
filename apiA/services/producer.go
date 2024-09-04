@@ -24,7 +24,7 @@ func NewEventProducer(producer sarama.SyncProducer) EventProducer {
 func (obj eventProducer) Produce(ctx echo.Context, event events.Event, headers []events.EventHeader) error {
 	requestID := ctx.Get(logs.RequestID).(string)
 	topic := reflect.TypeOf(event).Name()
-	logs.Info(requestID, "producing message in topic "+topic)
+	logs.Debug(requestID, "producing message in topic "+topic)
 
 	value, err := json.Marshal(event)
 	if err != nil {

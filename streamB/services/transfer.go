@@ -25,6 +25,7 @@ func NewEventHandler() EventHandler {
 func (obj eventHandler) Handle(topic string, key []byte, payload []byte, headers []*sarama.RecordHeader) {
 	requestID := string(key)
 	logs.Info(requestID, "handling topic "+topic)
+	//logs.Debug(requestID, fmt.Sprintf("consume%#v", headers))
 	switch topic {
 	case reflect.TypeOf(events.TransferExternalEvent{}).Name():
 		createdEvent := &events.TransferExternalEvent{}
@@ -43,7 +44,7 @@ func (obj eventHandler) Handle(topic string, key []byte, payload []byte, headers
 				Reason: "secret token is missing or invalid",
 			}
 		} else {
-			logs.Info(requestID, "transfer is in progress with secretToken "+secretToken)
+			logs.Debug(requestID, "transfer is in progress with secretToken "+secretToken)
 			//time.Sleep(500 * time.Millisecond)
 			logs.Info(requestID, "transaction transferred")
 
@@ -66,7 +67,7 @@ func (obj eventHandler) Handle(topic string, key []byte, payload []byte, headers
 		}
 		logs.Info(requestID, "message sent: "+callbackEvent.ToString())
 	default:
-		logs.Info(requestID, "topic unmatched "+topic)
+		logs.Debug(requestID, "topic unmatched "+topic)
 	}
 }
 

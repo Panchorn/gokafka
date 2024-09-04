@@ -1,0 +1,67 @@
+#0 building with "desktop-linux" instance using docker driver
+
+#1 [internal] load build definition from Dockerfile
+#1 transferring dockerfile: 447B done
+#1 DONE 0.0s
+
+#2 [internal] load metadata for docker.io/library/golang:1.22-alpine
+#2 ...
+
+#3 [auth] library/golang:pull token for registry-1.docker.io
+#3 DONE 0.0s
+
+#2 [internal] load metadata for docker.io/library/golang:1.22-alpine
+#2 DONE 2.3s
+
+#4 [internal] load .dockerignore
+#4 transferring context: 2B done
+#4 DONE 0.0s
+
+#5 [ 1/12] FROM docker.io/library/golang:1.22-alpine@sha256:1a478681b671001b7f029f94b5016aed984a23ad99c707f6a0ab6563860ae2f3
+#5 DONE 0.0s
+
+#6 [internal] load build context
+#6 transferring context: 44.47kB done
+#6 DONE 0.0s
+
+#7 [ 2/12] RUN mkdir /encryption
+#7 CACHED
+
+#8 [ 4/12] RUN mkdir /logs
+#8 CACHED
+
+#9 [ 3/12] RUN mkdir /events
+#9 CACHED
+
+#10 [ 5/12] COPY encryption/ /encryption
+#10 CACHED
+
+#11 [ 6/12] COPY events/ /events
+#11 DONE 0.0s
+
+#12 [ 7/12] COPY logs/ /logs
+#12 DONE 0.0s
+
+#13 [ 8/12] WORKDIR /app
+#13 DONE 0.0s
+
+#14 [ 9/12] COPY go.mod go.sum ./
+#14 DONE 0.0s
+
+#15 [10/12] RUN go mod download
+#15 DONE 6.9s
+
+#16 [11/12] COPY . .
+#16 DONE 0.0s
+
+#17 [12/12] RUN go build -o main .
+#17 DONE 11.3s
+
+#18 exporting to image
+#18 exporting layers
+#18 exporting layers 3.4s done
+#18 writing image sha256:7734a564eb9744d688fc643253188490bea1f0ea96edff86744b145ac8d63b5e done
+#18 naming to docker.io/library/gokafka-api-a done
+#18 DONE 3.4s
+
+View build details: docker-desktop://dashboard/build/desktop-linux/desktop-linux/w9ub5npszblmdfwcllestw9g6

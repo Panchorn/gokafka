@@ -27,8 +27,9 @@ func NewTransferEventHandler(transferRepository repositories.TransactionReposito
 func (obj transferEventHandler) Handle(topic string, key []byte, payload []byte, headers []*sarama.RecordHeader) {
 	requestID := string(key)
 	logs.Info(requestID, "handling topic "+topic)
+	//logs.Debug(requestID, fmt.Sprintf("consume%#v", headers))
 	for _, header := range headers {
-		logs.Info(requestID, "handling topic with header "+string(header.Key)+" "+string(header.Value))
+		logs.Debug(requestID, "handling topic with header "+string(header.Key)+" "+string(header.Value))
 	}
 
 	switch topic {
@@ -108,7 +109,7 @@ func (obj transferEventHandler) Handle(topic string, key []byte, payload []byte,
 		}
 		logs.Info(requestID, "patched transaction to FAILED")
 	default:
-		logs.Info(requestID, "topic unmatched: "+topic)
+		logs.Debug(requestID, "topic unmatched: "+topic)
 	}
 }
 
@@ -118,6 +119,6 @@ func evictTransaction(obj transferEventHandler, requestID string, refID string) 
 		logs.Error(requestID, err)
 		return err
 	}
-	logs.Info(requestID, "redis transaction evicted")
+	logs.Debug(requestID, "redis transaction evicted")
 	return nil
 }

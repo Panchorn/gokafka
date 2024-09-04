@@ -24,7 +24,7 @@ func NewTransactionServiceRedis(transactionRepository repositories.TransactionRe
 }
 
 func (r transactionServiceRedis) GetTransaction(requestID string, refID string) (transaction repositories.Transaction, err error) {
-	logs.Info(requestID, "getting transaction from redis")
+	logs.Debug(requestID, "getting transaction from redis")
 	key := "service:transactions:" + refID
 
 	// Redis Get
@@ -32,7 +32,7 @@ func (r transactionServiceRedis) GetTransaction(requestID string, refID string) 
 	if err == nil {
 		err = json.Unmarshal([]byte(transactionJson), &transaction)
 		if err == nil {
-			logs.Info(requestID, "transaction cache "+transaction.ToString())
+			logs.Debug(requestID, "transaction cache "+transaction.ToString())
 			return transaction, nil
 		}
 	}
@@ -55,6 +55,6 @@ func (r transactionServiceRedis) GetTransaction(requestID string, refID string) 
 		return repositories.Transaction{}, err
 	}
 
-	logs.Info(requestID, "transaction cache "+transaction.ToString())
+	logs.Debug(requestID, "transaction cache "+transaction.ToString())
 	return transaction, nil
 }
